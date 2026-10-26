@@ -1098,11 +1098,9 @@ function loadGame(slot){const order=slot?[slot]:SLOTS.filter(s=>STORE.cache[s]).
 function hasSave(){return !!latestSlot();}
 function recInfo(r){const d=new Date(r.t);return 'Clan '+esc(r.clan||'?')+' · chapitre '+chapOf(r.story)+(r.fini?' (terminé)':'')+' · niveau moyen '+r.lvl+' · '+r.n+' membres'+(NODES[r.node]?' · '+esc(NODES[r.node].n):'')+(r.t?'<br>'+d.toLocaleDateString('fr-FR')+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'');}
 /* --- fichier : export / import --- */
-let DLCAP=null;try{if(window.claude&&typeof window.claude.use==='function')window.claude.use('downloads').then(d=>{DLCAP=d;}).catch(()=>{});}catch(_){}
 function exportSave(rec){const txt=JSON.stringify(Object.assign({jeu:'Heaven Omega',studio:'F.S.M Game House',format:1},rec));
   const nm='HeavenOmega_'+String(rec.clan||'clan').replace(/[^A-Za-z0-9À-ÿ_-]+/g,'')+'_'+new Date(rec.t||Date.now()).toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json';
   const blob=new Blob([txt],{type:'application/json'});
-  if(DLCAP){DLCAP.save({filename:nm,data:txt}).then(()=>toast('Sauvegarde exportée.')).catch(e=>{if(e&&(e.code==='declined'||e.code==='rate_limited'))return;exportText(txt);});return;}
   try{const f=new File([blob],nm,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Sauvegarde Heaven Omega'}).then(()=>toast('Sauvegarde exportée.')).catch(e=>{if(!e||e.name!=='AbortError')exportText(txt);});return;}}catch(_){}
   try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},5000);toast('Fichier « '+nm+' » enregistré dans vos téléchargements.',4200);}
   catch(_){exportText(txt);}}
@@ -2279,7 +2277,7 @@ function endOfTurn(u,cost){if(u.colosse)cost=Math.round(cost*.85);u.ct=Math.max(
 async function newEdit(u){const pool=['epee','magie','soin','arc','dague','tech','objet'].filter(x=>!B.law||!B.law.f.includes(x));const f=pick(pool);await tween(400,k=>{u.cast=k;});u.cast=0;sfx('sifflet');B.law={f:[f],v:null};loiBt();await banner('Nouvel Édit',LAWS[f].n+' : désormais interdit',1600);}
 async function summon(u){if(B.units.filter(x=>x.team===1&&!x.boss).length>=4)return;let spot=null;for(let r=1;r<4&&!spot;r++)for(let y=u.y-r;y<=u.y+r&&!spot;y++)for(let x=u.x-r;x<=u.x+r;x++){if(Math.abs(x-u.x)+Math.abs(y-u.y)!==r)continue;if(standable(cellAt(x,y))&&!unitAt(x,y,true)){spot={x,y};break;}}
   if(!spot)return;await tween(400,k=>{u.cast=k;});u.cast=0;sfx('encre');const e=mkEnemy(['rature',Math.max(1,u.lvl-3),spot.x,spot.y]);e.ph=cellAt(spot.x,spot.y).h;e.alpha=0;B.units.push(e);const p=tileWorld(spot.x,spot.y,0);addFx('encre',p.x,p.y,600);await tween(400,k=>{e.alpha=k;});await banner('Oméga écrit une Rature',null,900);ordre();}
-/* --- IA --- */
+/* --- Comportement ennemi --- */
 function actsOf(u){const a=[{id:'atk'}];for(const id of u.ab){const d=AB[id];if(d.t==='steal'||d.t==='react')continue;if((d.mp||0)>u.mp)continue;a.push({id});}return a;}
 function aiScore(u,act,pos,tiles){const tg=targetsOn(act,tiles,u,pos);if(!tg.length)return-1e9;let s=0;
   for(const t of tg){const r=calc(u,act,t,pos),foe=t.team!==u.team;
